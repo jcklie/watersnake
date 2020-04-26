@@ -1,5 +1,7 @@
 # watersnake
 
+[![Build Status](https://travis-ci.org/jcklie/watersnake.svg?branch=master)](https://travis-ci.org/jcklie/watersnake)
+
 Currently contains a a simple spread-spectrum based informed watermarking implementation in Python.
 It is based on the paper [Ingemar J. Cox, Joe Kilian, F. Thomson Leighton, and Talal Shamoon, "Secure Spread 
 Spectrum Watermarking for Multimedia," IEEE Trans. on Image Processing, Dec. 1997](http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=650120).

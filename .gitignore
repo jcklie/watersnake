@@ -93,3 +93,4 @@ modules.xml
 venv/
 *_marked*.png
 *.pyc
+*.png

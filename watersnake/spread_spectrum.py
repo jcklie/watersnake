@@ -56,9 +56,7 @@ class SpreadSpectrumWatermarking:
         ycbcr_marked[:, :, 0] = luminance_marked
 
         if np.allclose(ycbcr, ycbcr_marked):
-            raise RuntimeError(
-                "Result image identical to original one. Change either alpha value or watermark size."
-            )
+            raise RuntimeError("Result image identical to original one. Change either alpha value or watermark size.")
 
         img_rgb_marked = Image.fromarray(ycbcr_marked, "YCbCr").convert("RGB")
         pixels_rgb_marked = np.asarray(img_rgb_marked)

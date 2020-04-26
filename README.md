@@ -7,37 +7,72 @@ Spectrum Watermarking for Multimedia," IEEE Trans. on Image Processing, Dec. 199
 ## Usage
    
 ````python
+import os
+
 from watersnake import SpreadSpectrumWatermarking
 
-s = SpreadSpectrumWatermarking(300, 0.2)
+from skimage.data import data_dir, astronaut
+import imageio
 
-path_original = r"original.png"
-path_suspect1 = r"marked1.png"
-path_suspect2 = r"marked2.png"
+import numpy as np
 
-# Mark images with two different watermarks and save the resulting images
-img_marked, watermark1 = s.mark_image(path_original)
-img_marked.save(path_suspect1, "png")
 
-img_marked, watermark2 = s.mark_image(path_original)
-img_marked.save(path_suspect2, "png")
+def test_mark_array():
+    np.random.seed(42)
+    s = SpreadSpectrumWatermarking(500, 0.5)
 
-# Extract watermarks from previously marked images
-suspicious_watermark1 = s.extract_from_image(path_original=path_original, path_suspect=path_suspect1)
-suspicious_watermark2 = s.extract_from_image(path_original=path_original, path_suspect=path_suspect2)
+    img_original = astronaut()
 
-# Compute pairwise similarity between all 4 combinations. The similarity between
-# a watermark and its extracted counterpart should be high, the similarity between
-# two different watermarks should be low 
-similarity11 = s.similarity(watermark1, suspicious_watermark1)
-similarity22 = s.similarity(watermark2, suspicious_watermark2)
-similarity12 = s.similarity(watermark1, suspicious_watermark2)
-similarity21 = s.similarity(watermark2, suspicious_watermark1)
+    img_marked1, watermark1 = s.mark_array(img_original)
+    img_marked2, watermark2 = s.mark_array(img_original)
 
-print(similarity11, "should be high")
-print(similarity22, "should be high")
-print(similarity12, "should be low")
-print(similarity21, "should be low")
+    suspicious_watermark1 = s.extract_from_array(data_original=img_original, data_suspect=img_marked1)
+    suspicious_watermark2 = s.extract_from_array(data_original=img_original, data_suspect=img_marked2)
+
+    compute_similarity(s, watermark1, watermark2, suspicious_watermark1, suspicious_watermark2)
+
+
+def test_mark_image():
+    np.random.seed(42)
+    s = SpreadSpectrumWatermarking(500, 0.5)
+
+    path_original = os.path.join(data_dir, "astronaut.png")
+    path_suspect1 = r"marked1.png"
+    path_suspect2 = r"marked2.png"
+
+    img_marked1, watermark1 = s.mark_image(path_original)
+    imageio.imwrite(path_suspect1, img_marked1.astype(np.uint8))
+
+    img_marked2, watermark2 = s.mark_image(path_original)
+    imageio.imwrite(path_suspect2, img_marked2.astype(np.uint8))
+
+    suspicious_watermark1 = s.extract_from_image(path_original=path_original, path_suspect=path_suspect1)
+    suspicious_watermark2 = s.extract_from_image(path_original=path_original, path_suspect=path_suspect2)
+
+    compute_similarity(s, watermark1, watermark2, suspicious_watermark1, suspicious_watermark2)
+
+
+def compute_similarity(s, watermark1, watermark2, suspicious_watermark1, suspicious_watermark2):
+    similarity11 = s.similarity(watermark1, suspicious_watermark1)
+    similarity22 = s.similarity(watermark2, suspicious_watermark2)
+    similarity12 = s.similarity(watermark1, suspicious_watermark2)
+    similarity21 = s.similarity(watermark2, suspicious_watermark1)
+
+    print(similarity11, "should be high")
+    print(similarity22, "should be high")
+    print(similarity12, "should be low")
+    print(similarity21, "should be low")
+
+
+def main():
+    print("Image")
+    test_mark_image()
+    print("Array")
+    test_mark_array()
+
+
+if __name__ == "__main__":
+    main()
 ````
 
 ## Acknowledgements

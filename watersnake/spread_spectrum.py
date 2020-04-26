@@ -2,7 +2,7 @@ from typing import Tuple
 
 import numpy as np
 from scipy.fftpack import dct, idct
-from skimage import io, color, img_as_float
+from PIL import Image
 
 
 class SpreadSpectrumWatermarking:
@@ -21,19 +21,20 @@ class SpreadSpectrumWatermarking:
         #    components of the luminance DCT
         # 2. Generate a watermark vector W of length n from a Gaussian with mean 0 and std 1
         # 3. Replace V with V + alpha * W
-        width, height, _ = pixels.shape
+        img = Image.fromarray(pixels, "RGB")
+        height, width = img.size
 
         # We use YCbCr as we want to smear the watermark in the parts
         # of the image which human perception is very sensitive to,
         # in this case we choose the luminance. Also, the algorithm
         # works on a 2d single-channel image, therefore we need to choose
         # a channel we apply the DCT to when working with color images.
-        ycbcr = color.rgb2ycbcr(pixels)
+        ycbcr = np.asarray(img.convert("YCbCr"))
         luminance = ycbcr[:, :, 0]
 
         # We apply the DCT to the luminance channel and find the n largest
         # components. These we alter with our watermark
-        dct = dct2(luminance)
+        dct = _dct2(luminance)
 
         # Extract n largest components in sorted order
         flattened_dct = dct.flatten(order="C")
@@ -50,7 +51,7 @@ class SpreadSpectrumWatermarking:
 
         # Convert it back
         dct_marked = flattened_dct_marked.reshape((width, height))
-        luminance_marked = idct2(dct_marked)
+        luminance_marked = _idct2(dct_marked)
         ycbcr_marked = ycbcr.copy()
         ycbcr_marked[:, :, 0] = luminance_marked
 
@@ -59,21 +60,22 @@ class SpreadSpectrumWatermarking:
                 "Result image identical to original one. Change either alpha value or watermark size."
             )
 
-        img_rgb_marked = color.ycbcr2rgb(ycbcr_marked)
-        img_rgb_marked = np.clip(img_rgb_marked, a_min=0.0, a_max=1.0)
+        img_rgb_marked = Image.fromarray(ycbcr_marked, "YCbCr").convert("RGB")
+        pixels_rgb_marked = np.asarray(img_rgb_marked)
 
-        return img_rgb_marked, watermark
+        return pixels_rgb_marked, watermark
 
     def mark_image(self, path: str) -> Tuple[np.ndarray, np.ndarray]:
-        pixels = io.imread(path)
+        pixels = np.asarray(Image.open(path))
         return self.mark_array(pixels)
 
     def extract_from_array(self, data_original: np.ndarray, data_suspect: np.ndarray) -> np.ndarray:
-        luminance_original = color.rgb2gray(data_original)
-        luminance_suspect = color.rgb2gray(data_suspect)
+        """ Extract watermark from a 2D array according to spread spectrum watermarking algorithm"""
+        luminance_original = np.asarray(Image.fromarray(data_original, "RGB").convert("L"))
+        luminance_suspect = np.asarray(Image.fromarray(data_suspect, "RGB").convert("L"))
 
-        dct_original = dct2(luminance_original)
-        dct_suspect = dct2(luminance_suspect)
+        dct_original = _dct2(luminance_original)
+        dct_suspect = _dct2(luminance_suspect)
 
         flattened_dct_original = dct_original.flatten(order="C")
         flattened_dct_suspect = dct_suspect.flatten(order="C")
@@ -85,8 +87,8 @@ class SpreadSpectrumWatermarking:
 
     def extract_from_image(self, path_original: str, path_suspect: str) -> np.ndarray:
         """ Extract watermark from an image according to spread spectrum watermarking algorithm"""
-        img_original = io.imread(path_original)
-        img_suspect = io.imread(path_suspect)
+        img_original = np.asarray(Image.open(path_original))
+        img_suspect = np.asarray(Image.open(path_suspect))
 
         return self.extract_from_array(img_original, img_suspect)
 
@@ -106,10 +108,10 @@ class SpreadSpectrumWatermarking:
 
 
 # implement 2D DCT
-def dct2(a):
+def _dct2(a):
     return dct(dct(a.T, norm="ortho").T, norm="ortho")
 
 
 # implement 2D IDCT
-def idct2(a):
+def _idct2(a):
     return idct(idct(a.T, norm="ortho").T, norm="ortho")

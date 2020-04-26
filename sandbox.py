@@ -1,15 +1,18 @@
+import os
+
 from watersnake import SpreadSpectrumWatermarking
 
-from skimage.data import chelsea
+from skimage.data import data_dir, astronaut
 import imageio
 
 import numpy as np
 
 
 def test_mark_array():
-    s = SpreadSpectrumWatermarking(300, 0.2)
+    np.random.seed(42)
+    s = SpreadSpectrumWatermarking(500, 0.5)
 
-    img_original = chelsea()
+    img_original = astronaut()
 
     img_marked1, watermark1 = s.mark_array(img_original)
     img_marked2, watermark2 = s.mark_array(img_original)
@@ -21,11 +24,12 @@ def test_mark_array():
 
 
 def test_mark_image():
-    s = SpreadSpectrumWatermarking(300, 0.1)
+    np.random.seed(42)
+    s = SpreadSpectrumWatermarking(500, 0.5)
 
-    path_original = r"tests/images/lenna.png"
-    path_suspect1 = r"lenna_marked1.png"
-    path_suspect2 = r"lenna_marked2.png"
+    path_original = os.path.join(data_dir, "astronaut.png")
+    path_suspect1 = r"marked1.png"
+    path_suspect2 = r"marked2.png"
 
     img_marked1, watermark1 = s.mark_image(path_original)
     imageio.imwrite(path_suspect1, img_marked1.astype(np.uint8))
@@ -56,8 +60,6 @@ def main():
     test_mark_image()
     print("Array")
     test_mark_array()
-
-
 
 
 if __name__ == "__main__":

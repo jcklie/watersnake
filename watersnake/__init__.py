@@ -1,0 +1,1 @@
+from watersnake.spread_spectrum import SpreadSpectrumWatermarking
